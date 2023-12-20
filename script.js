@@ -82,33 +82,34 @@ const displayMovements = function (movements) {
     containerMovements.insertAdjacentHTML('afterbegin', html);
   });
 };
-displayMovements(account1.movements);
 
 const calcPrintBalance = movements => {
   const balance = movements.reduce((acc, cur) => acc + cur, 0);
 
   labelBalance.textContent = `${balance}€`;
 };
-calcPrintBalance(account1.movements);
 
-const calcDisplaySummary = movements => {
+const calcDisplaySummary = acc => {
+  const { movements, interestRate } = acc;
   const incomes = movements
     .filter(mov => mov > 0)
     .reduce((acc, cur) => acc + cur, 0);
+
   const out = movements
     .filter(mov => mov < 0)
     .reduce((acc, cur) => acc + Math.abs(cur), 0);
+
   const int = movements
     .filter(mov => mov > 0)
-    .map(deposit => (deposit * 1.2) / 100)
+    .map(deposit => (deposit * interestRate) / 100)
     .filter(int => int >= 1)
-    .reduce((acc, int) => acc + int, 0);
+    .reduce((acc, int) => acc + int, 0)
+    .toFixed(2);
 
   labelSumIn.textContent = `${incomes}€`;
   labelSumOut.textContent = `${out}€`;
   labelSumInterest.textContent = `${int}€`;
 };
-calcDisplaySummary(account1.movements);
 
 const createUsernames = accounts => {
   accounts.forEach(acc => {
@@ -120,5 +121,36 @@ const createUsernames = accounts => {
   });
 };
 createUsernames(accounts);
+
+// Event handlers
+let currentAccount;
+
+btnLogin.addEventListener('click', event => {
+  event.preventDefault();
+
+  currentAccount = accounts.find(
+    acc =>
+      acc.username === inputLoginUsername.value &&
+      acc.pin === +inputLoginPin.value,
+  );
+
+  if (currentAccount) {
+    const { owner, movements, interestRate } = currentAccount;
+    containerApp.style.opacity = 1;
+    const username = owner.split(' ')[0];
+    labelWelcome.textContent = `Welcome back, ${username}`;
+    calcPrintBalance(movements);
+    displayMovements(movements);
+    calcDisplaySummary(currentAccount);
+
+    // clear input fields
+    inputLoginUsername.value = inputLoginPin.value = '';
+    inputLoginUsername.blur();
+    inputLoginPin.blur();
+  } else {
+    labelWelcome.textContent = 'Log in to get started';
+    containerApp.style.opacity = 0;
+  }
+});
 
 ////////////////////////////////////////
