@@ -83,10 +83,13 @@ const displayMovements = function (movements) {
   });
 };
 
-const calcPrintBalance = movements => {
-  const balance = movements.reduce((acc, cur) => acc + cur, 0);
+const getBalance = movements => movements.reduce((acc, cur) => acc + cur, 0);
 
-  labelBalance.textContent = `${balance}€`;
+const calcPrintBalance = acc => {
+  const { movements } = acc;
+  acc.balance = getBalance(movements);
+
+  labelBalance.textContent = `${acc.balance}€`;
 };
 
 const calcDisplaySummary = acc => {
@@ -122,26 +125,29 @@ const createUsernames = accounts => {
 };
 createUsernames(accounts);
 
+const getUser = username => accounts.find(acc => acc.username === username);
+
+const updateUI = acc => {
+  calcPrintBalance(acc);
+  displayMovements(acc.movements);
+  calcDisplaySummary(acc);
+};
+
 // Event handlers
 let currentAccount;
 
 btnLogin.addEventListener('click', event => {
   event.preventDefault();
 
-  currentAccount = accounts.find(
-    acc =>
-      acc.username === inputLoginUsername.value &&
-      acc.pin === +inputLoginPin.value,
-  );
+  currentAccount = getUser(inputLoginUsername.value);
 
-  if (currentAccount) {
-    const { owner, movements, interestRate } = currentAccount;
+  if (currentAccount && currentAccount.pin === +inputLoginPin.value) {
+    const { owner } = currentAccount;
     containerApp.style.opacity = 1;
     const username = owner.split(' ')[0];
     labelWelcome.textContent = `Welcome back, ${username}`;
-    calcPrintBalance(movements);
-    displayMovements(movements);
-    calcDisplaySummary(currentAccount);
+
+    updateUI(currentAccount);
 
     // clear input fields
     inputLoginUsername.value = inputLoginPin.value = '';
@@ -151,6 +157,52 @@ btnLogin.addEventListener('click', event => {
     labelWelcome.textContent = 'Log in to get started';
     containerApp.style.opacity = 0;
   }
+});
+
+btnTransfer.addEventListener('click', event => {
+  event.preventDefault();
+
+  const amount = +inputTransferAmount.value;
+  const receiverAcc = getUser(inputTransferTo.value);
+
+  if (
+    amount > 0 &&
+    receiverAcc &&
+    currentAccount.balance >= amount &&
+    currentAccount.username !== receiverAcc.username
+  ) {
+    // Doing the transfer
+    currentAccount.movements.push(-amount);
+    receiverAcc.movements.push(amount);
+
+    updateUI(currentAccount);
+  }
+
+  inputTransferTo.value = inputTransferAmount.value = '';
+  inputTransferTo.blur();
+  inputTransferAmount.blur();
+});
+
+btnClose.addEventListener('click', event => {
+  event.preventDefault();
+  const { username: currentUsername, pin: currentPin } = currentAccount;
+
+  const usernameInp = inputCloseUsername.value;
+  const pinInp = +inputClosePin.value;
+
+  if (currentUsername === usernameInp && currentPin === pinInp) {
+    const currentAccIndex = accounts.findIndex(
+      acc => acc.username === currentUsername,
+    );
+
+    // Delete account
+    accounts.splice(currentAccIndex, 1);
+
+    labelWelcome.textContent = 'Log in to get started';
+    containerApp.style.opacity = 0;
+  }
+
+  inputCloseUsername.value = inputClosePin.value = '';
 });
 
 ////////////////////////////////////////
