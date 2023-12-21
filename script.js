@@ -183,8 +183,26 @@ btnTransfer.addEventListener('click', event => {
   inputTransferAmount.blur();
 });
 
+btnLoan.addEventListener('click', event => {
+  event.preventDefault();
+
+  const amount = +inputLoanAmount.value;
+
+  const cond = currentAccount.movements.some(mov => mov >= amount * 0.1);
+
+  if (amount > 0 && cond) {
+    // Add movement
+    currentAccount.movements.push(amount);
+    updateUI(currentAccount);
+  }
+
+  inputLoanAmount.value = '';
+  inputLoanAmount.blur();
+});
+
 btnClose.addEventListener('click', event => {
   event.preventDefault();
+
   const { username: currentUsername, pin: currentPin } = currentAccount;
 
   const usernameInp = inputCloseUsername.value;
