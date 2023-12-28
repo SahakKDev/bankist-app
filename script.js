@@ -4,14 +4,14 @@
 const account1 = {
   owner: 'Jonas Schmedtmann',
   movements: [
-    [200, '2019-11-18T21:31:17.178Z'],
-    [455.23, '2019-12-23T07:42:02.383Z'],
-    [-306.5, '2020-01-28T09:15:04.904Z'],
-    [25000, '2020-04-01T10:17:24.185Z'],
-    [-642.21, '2020-05-08T14:11:59.604Z'],
-    [-133.9, '2020-05-27T17:01:17.194Z'],
-    [79.97, '2020-07-11T23:36:17.929Z'],
-    [1300, '2020-07-12T10:51:36.790Z'],
+    [200, '2022-11-18T21:31:17.178Z'],
+    [455.23, '2022-12-23T07:42:02.383Z'],
+    [-306.5, '2023-01-28T09:15:04.904Z'],
+    [25000, '2023-12-21T10:17:24.185Z'],
+    [-642.21, '2023-12-25T14:11:59.604Z'],
+    [-133.9, '2023-12-26T17:01:17.194Z'],
+    [79.97, '2023-12-27T19:36:17.929Z'],
+    [1300, '2023-12-28T10:51:36.790Z'],
   ],
   interestRate: 1.2, // %
   pin: 1111,
@@ -23,14 +23,14 @@ const account1 = {
 const account2 = {
   owner: 'Jessica Davis',
   movements: [
-    [5000, '2019-11-01T13:15:33.035Z'],
-    [3400, '2019-11-30T09:48:16.867Z'],
-    [-150, '2019-12-25T06:04:23.907Z'],
-    [-790, '2020-01-25T14:18:46.235Z'],
-    [-3210, '2020-02-05T16:33:06.386Z'],
-    [-1000, '2020-04-10T14:43:26.374Z'],
-    [8500, '2020-06-25T18:49:59.371Z'],
-    [-30, '2020-07-26T12:01:20.894Z'],
+    [5000, '2022-11-01T13:15:33.035Z'],
+    [3400, '2022-11-30T09:48:16.867Z'],
+    [-150, '2022-12-25T06:04:23.907Z'],
+    [-790, '2023-01-25T14:18:46.235Z'],
+    [-3210, '2023-02-05T16:33:06.386Z'],
+    [-1000, '2023-04-10T14:43:26.374Z'],
+    [8500, '2023-06-25T18:49:59.371Z'],
+    [-30, '2023-07-26T12:01:20.894Z'],
   ],
   interestRate: 1.5,
   pin: 2222,
@@ -73,6 +73,26 @@ const currencies = new Map([
   ['GBP', 'Pound sterling'],
 ]);
 
+// Functions
+const getFormatedDate = (date, options, locale) => {
+  return new Intl.DateTimeFormat(locale, options).format(date);
+};
+
+const formatMovementDate = (date, locale) => {
+  const calcDaysPast = (date1, date2) => {
+    return Math.round(Math.abs((date2 - date1) / (1000 * 60 * 60 * 24)));
+  };
+
+  const daysPast = calcDaysPast(new Date(), date);
+
+  if (daysPast === 0) return 'today';
+  if (daysPast === 1) return 'yesterday';
+  if (daysPast <= 7) return `${daysPast} days ago`;
+  if (daysPast === 0) return 'today';
+
+  return getFormatedDate(date, undefined, locale);
+};
+
 const displayMovements = function (acc, sort = false) {
   containerMovements.innerHTML = '';
   const { movements } = acc;
@@ -81,10 +101,7 @@ const displayMovements = function (acc, sort = false) {
 
   movs.forEach(function ([mov, movDate], i) {
     const date = new Date(movDate);
-    const day = date.getDate().toString().padStart(2, 0);
-    const month = (date.getMonth() + 1).toString().padStart(2, 0);
-    const year = date.getFullYear();
-    const displayDate = `${day}/${month}/${year}`;
+    const displayDate = formatMovementDate(date, acc.locale);
 
     const type = mov > 0 ? 'deposit' : 'withdrawal';
     const html = `
@@ -170,13 +187,19 @@ btnLogin.addEventListener('click', event => {
 
     // Crete current date and time
     const now = new Date();
-    const day = now.getDate().toString().padStart(2, 0);
-    const month = (now.getMonth() + 1).toString().padStart(2, 0);
-    const year = now.getFullYear();
-    const hour = now.getHours().toString().padStart(2, 0);
-    const minute = now.getMinutes().toString().padStart(2, 0);
+    const dateOptions = {
+      hour: '2-digit',
+      minute: '2-digit',
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+    };
 
-    labelDate.textContent = `${day}/${month}/${year}, ${hour}:${minute}`;
+    labelDate.textContent = getFormatedDate(
+      now,
+      dateOptions,
+      currentAccount.locale,
+    );
 
     updateUI(currentAccount);
 
